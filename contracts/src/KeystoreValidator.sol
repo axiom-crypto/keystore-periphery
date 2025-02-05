@@ -6,7 +6,6 @@ import { IValidationModule, IModule as IERC6900Module } from "./IValidationModul
 import { IL1Block } from "./interfaces/IL1Block.sol";
 import { IKeyDataConsumer } from "./interfaces/IKeyDataConsumer.sol";
 import { IStorageProofVerifier } from "./interfaces/IStorageProofVerifier.sol";
-import { KeystoreAggregator } from "./KeystoreAggregator.sol";
 import { RLPReader } from "./vendor/optimism-mpt/rlp/RLPReader.sol";
 
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";

@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import { IKeyDataConsumer } from "../interfaces/IKeyDataConsumer.sol";
+import { IKeyDataConsumer } from "../../src/interfaces/IKeyDataConsumer.sol";
 
 contract ECDSAConsumer is IKeyDataConsumer {
     struct ECDSAKeyData {
@@ -20,7 +20,7 @@ contract ECDSAConsumer is IKeyDataConsumer {
 
     function consumeKeyData(bytes calldata keyData, bytes calldata walletSignatures, bytes32 userOpHash)
         external
-        view
+        pure
     {
         ECDSAKeyData calldata _keyData = _decodeECDSAKeyData(keyData);
 

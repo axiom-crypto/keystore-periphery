@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
-import { ECDSAConsumer } from "../src/keydata-consumers/ECDSAConsumer.sol";
+import { ECDSAConsumer } from "../test/example/ECDSAConsumer.sol";
 
 import { Script, safeconsole as console } from "forge-std/Script.sol";
 

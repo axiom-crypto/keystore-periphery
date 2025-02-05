@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { KeystoreValidator } from "../../src/KeystoreValidator.sol";
-import { ECDSAConsumer } from "../../src/keydata-consumers/ECDSAConsumer.sol";
-import { KeystoreAggregator } from "../../src/KeystoreAggregator.sol";
-import { StorageProofVerifier } from "../../src/StorageProofVerifier.sol";
-import { IStorageProofVerifier } from "../../src/interfaces/IStorageProofVerifier.sol";
+import { KeystoreValidator } from "../src/KeystoreValidator.sol";
+import { ECDSAConsumer } from "./example/ECDSAConsumer.sol";
+import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
+import { IStorageProofVerifier } from "../src/interfaces/IStorageProofVerifier.sol";
 
 import { RhinestoneModuleKit, ModuleKitHelpers, AccountInstance, UserOpData } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/accounts/common/interfaces/IERC7579Module.sol";
@@ -19,8 +18,6 @@ import { Test, stdJson as StdJson, safeconsole as console, console2 } from "forg
 contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
     using StdJson for *;
     using ModuleKitHelpers for AccountInstance;
-
-    KeystoreAggregator aggregator;
 
     AccountInstance internal instance;
     KeystoreValidator internal validator;
@@ -39,7 +36,6 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         init();
 
         newStorageProofVerifier = (new StorageProofVerifier());
-        aggregator = new KeystoreAggregator(newStorageProofVerifier);
 
         validator = new KeystoreValidator(
             newStorageProofVerifier,
@@ -50,8 +46,6 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
 
         instance = makeAccountInstance("KeystoreECDSAAccount");
         vm.deal(address(instance.account), 10 ether);
-
-        aggregator.cacheBlockhash();
 
         vm.warp(1_736_565_242);
     }
