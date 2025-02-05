@@ -19,7 +19,7 @@ The Keystore Validator (KV) is the core contract connecting L2s to the Axiom Key
 
 - **Keystore state syncers** provide some proof to the module of a finalized keystore state root at a certain L1 block timestamp.
 - **User smart accounts** install the module, read the keystore state and use the data to authenticate userOps.
-- **Consumer registrars** deploy and add [key data consumers](https://keystore-docs.vercel.app/docs/creating-a-keystore-account-type/key-data-consumer) to the module's consumer registry.
+- **Consumer registrars** deploy and add [key data consumers](https://keystore-docs.axiom.xyz/docs/creating-a-keystore-account-type/key-data-consumer) to the module's consumer registry.
 
 We give an overview of the details of each actor below.
 
@@ -71,7 +71,7 @@ Other forms of validation (such as ERC-6900's `validateRuntime(..)`) are not sup
 
 #### Consumer Registrars
 
-The KV uses a `creationCodehash` to identify a [key data consumer](https://keystore-docs.vercel.app/docs/creating-a-keystore-account-type/key-data-consumer) to outsource authentication against `keyData` to. For this to work, the contract must be deployed and registered in the module's consumer registry.
+The KV uses a `creationCodehash` to identify a [key data consumer](https://keystore-docs.axiom.xyz/docs/creating-a-keystore-account-type/key-data-consumer) to outsource authentication against `keyData` to. For this to work, the contract must be deployed and registered in the module's consumer registry.
 
 The consumer registrar facilitates deployment and registration of key data consumer contracts. It does this by exposing the following interface:
 
@@ -83,4 +83,4 @@ This will deploy the provided `bytecode` and register its `creationCodehash` in 
 
 ### Immutability and Trust Assumptions of the KV
 
-The module is [deployed](https://keystore-docs.vercel.app/docs/developer-reference/contract-addresses) immutably on all supported L2s. However, Axiom will retain the ability to update the storage proof verification logic in the future to follow potential upgrades to Ethereum L1. Unfortunately, because Ethereum L1 may change in future hard forks, there is no clear path at present to completely ossifying this module.
+The module is [deployed](https://keystore-docs.axiom.xyz/docs/developer-reference/contract-addresses) immutably on all supported L2s. However, Axiom will retain the ability to update the storage proof verification logic in the future to follow potential upgrades to Ethereum L1. Unfortunately, because Ethereum L1 may change in future hard forks, there is no clear path at present to completely ossifying this module.
