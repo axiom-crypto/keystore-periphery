@@ -23,7 +23,7 @@ jobs:
         with:
           check_filenames: true
           ignore_words_list:
-          skip: ./.git,
+          skip: ./.git,./contracts/src/vendor
 
   validate-links:
     runs-on: ${{ matrix.os }}
