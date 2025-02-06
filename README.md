@@ -83,4 +83,4 @@ This will deploy the provided `bytecode` and register its `creationCodehash` in 
 
 ### Immutability and Trust Assumptions of the KV
 
-The module is [deployed](https://keystore-docs.axiom.xyz/docs/developer-reference/contract-addresses) immutably on all supported L2s. However, Axiom will retain the ability to update the storage proof verification logic in the future to follow potential upgrades to Ethereum L1. Unfortunately, because Ethereum L1 may change in future hard forks, there is no clear path at present to completely ossifying this module.
+The module is [deployed](https://keystore-docs.axiom.xyz/docs/developer-reference/contract-addresses) immutably on all supported L2s. However, Axiom will retain the ability to update the storage proof verification logic in the future to follow potential upgrades to the Ethereum L1 state trie. Unfortunately, because Ethereum L1 may change in future hard forks, there is no clear path at present to completely ossifying this module.
