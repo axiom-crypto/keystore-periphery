@@ -17,7 +17,7 @@ forge build
 
 The Keystore Validator (KV) is the core contract connecting rollups to the Axiom Keystore. It is a validation module for both ERC-6900 and ERC-7579 smart accounts which facilitates reading the keystore state and authenticating userOps against data from the reads. There are three primary actors interacting with the KV:
 
-- **Keystore state syncers** provide some proof to the module of a finalized keystore state root at a certain L1 block timestamp.
+- **Keystore state syncers** verify finalized keystore state roots at a certain L1 block timestamp in the module.
 - **User smart accounts** install the module, read the keystore state and use the data to authenticate userOps.
 - **Consumer registrars** deploy and add [key data consumers](https://keystore-docs.axiom.xyz/docs/creating-a-keystore-account-type/key-data-consumer) to the module's consumer registry.
 
