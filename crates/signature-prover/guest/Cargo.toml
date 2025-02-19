@@ -1,0 +1,20 @@
+[package]
+name = "signature-prover-guest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alloy-primitives = { workspace = true, features = ["serde"] }
+serde = { workspace = true, features = ["alloc", "derive"] }
+openvm = { workspace = true }
+openvm-keccak256-guest = { workspace = true }
+
+[target.'cfg(not(target_os = "zkvm"))'.dependencies]
+openvm-stark-sdk = { workspace = true }
+openvm-sdk = { workspace = true }
+openvm-native-compiler = { workspace = true }
+openvm-native-recursion = { workspace = true }
+
+[features]
+default = []
+std = ["alloy-primitives/std"]
