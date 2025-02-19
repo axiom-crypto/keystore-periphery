@@ -1,12 +1,14 @@
-name: Rust unit tests
+name: Rust lints
 
 on:
   push:
     branches: ["main", "shayanh/rust-ci"]
     paths:
+      - ".github/**"
       - "crates/**"
   pull_request:
     paths:
+      - ".github/**"
       - "crates/**"
 
 concurrency:
