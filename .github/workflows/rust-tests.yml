@@ -1,0 +1,45 @@
+name: Rust unit tests
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "crates/**"
+  pull_request:
+    paths:
+      - "crates/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  build:
+    runs-on:
+      - runs-on=${{ github.run_id }}
+      - runner=64cpu-linux-x64
+
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Install Foundry
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "crates"
+          cache-on-failure: true
+
+      - name: Run tests
+        working-directory: crates
+        run: |
+          cargo t --workspace
