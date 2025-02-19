@@ -1,0 +1,50 @@
+[package]
+name = "signature-prover-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+signature-prover-guest = { workspace = true }
+
+snark-utils.workspace = true
+thiserror.workspace = true
+eyre.workspace = true
+clap.workspace = true
+
+serde = { workspace = true, features = ["alloc", "derive"] }
+serde_json.workspace = true
+bitcode.workspace = true
+
+alloy-primitives = { workspace = true, features = ["serde", "getrandom"] }
+
+openvm-sdk = { workspace = true }
+openvm-circuit = { workspace = true }
+openvm-transpiler = { workspace = true }
+openvm-build = { workspace = true }
+openvm-keccak256-guest = { workspace = true }
+openvm-native-compiler = { workspace = true }
+openvm-native-recursion = { workspace = true }
+openvm-stark-sdk = { workspace = true }
+halo2-axiom = { workspace = true }
+
+metrics = { workspace = true }
+tracing = { workspace = true, features = ["attributes"] }
+tracing-subscriber = { workspace = true, features = [
+    "std",
+    "env-filter",
+    "json",
+] }
+
+once_cell = { workspace = true }
+itertools = { workspace = true }
+rand = { workspace = true }
+hex = { workspace = true }
+hex-literal = { workspace = true }
+
+[dev-dependencies]
+lazy_static.workspace = true
+alloy-rlp.workspace = true
+
+[features]
+bench-metrics = ["openvm-sdk/bench-metrics", "openvm-circuit/bench-metrics"]
+test-utils = []
