@@ -53,13 +53,13 @@ contract StorageProofVerifier is IStorageProofVerifier {
         RLPReader.RLPItem[] memory blockHeaderRlp = RLPReader.readList(blockHeader);
 
         // stateRoot is at index 3 in the block header
-        bytes32 stateRoot = readHash(RLPReader.readBytes(blockHeaderRlp[3]));
+        bytes32 stateRoot = bytes32(RLPReader.readBytes(blockHeaderRlp[3]));
 
         // check account proof with relevant address
         bytes memory account = SecureMerkleTrie.get(abi.encodePacked(_address), accountProof, stateRoot);
         RLPReader.RLPItem[] memory accountRlp = RLPReader.readList(account);
 
-        bytes32 storageRoot = readHash(RLPReader.readBytes(accountRlp[2]));
+        bytes32 storageRoot = bytes32(RLPReader.readBytes(accountRlp[2]));
 
         // check storage proof with relevant slot
         bytes memory rlpSlotValue = SecureMerkleTrie.get(abi.encodePacked(storageSlot), storageProof, storageRoot);
