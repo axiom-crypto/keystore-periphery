@@ -14,8 +14,6 @@ contract StorageProofVerifier is IStorageProofVerifier {
 
     error CannotVerifyExclusionProof();
 
-    error SlotValueIsNotHash();
-
     function verifyStorageSlot(StorageProof calldata storageProof, address _address, bytes32 storageSlot)
         external
         pure
