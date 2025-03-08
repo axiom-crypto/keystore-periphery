@@ -145,6 +145,24 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         assertEq(target.balance, prevBalance + value);
     }
 
+    // TODO: Move this to a separate test file
+    function test_unpaddedStorageProof() public {
+        (bytes memory blockHeader, bytes[] memory accountProof, bytes[] memory storageProof) =
+            _readStorageProof("proofs/UnpaddedStorageProof.json");
+
+        newStorageProofVerifier.verifyStorageSlot(
+            IStorageProofVerifier.StorageProof({
+                // Test that the verifier can handle storage values prepended with 0-bytes
+                storageValue: bytes32(0x004fff5655c843d20974765e25672d6f56960ad4e8f5a39150277feb4a63ff76),
+                blockHeader: blockHeader,
+                accountProof: accountProof,
+                storageProof: storageProof
+            }),
+            0xeb4b183e655AC3496Cc686243E3b76328A705100,
+            bytes32(0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000)
+        );
+    }
+
     function _readStorageProof(string memory filePath)
         public
         view

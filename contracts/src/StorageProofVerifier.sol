@@ -61,7 +61,11 @@ contract StorageProofVerifier is IStorageProofVerifier {
 
         // check storage proof with relevant slot
         bytes memory rlpSlotValue = SecureMerkleTrie.get(abi.encodePacked(storageSlot), storageProof, storageRoot);
-        bytes32 provenStorageValue = bytes32(RLPReader.readBytes(rlpSlotValue));
+        bytes memory bytesSlotValue = RLPReader.readBytes(rlpSlotValue);
+
+        // We need to add padding to the slot value since they are encoded as
+        // uint256
+        bytes32 provenStorageValue = bytes32(uint256(bytes32(bytesSlotValue)) >> (8 * (32 - bytesSlotValue.length)));
 
         if (provenStorageValue != storageValue) revert InvalidStorageValue();
     }
