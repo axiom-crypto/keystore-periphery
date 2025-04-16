@@ -55,7 +55,16 @@ where
         let tx = parse_tx(unauthenticated_transaction)?;
         match tx {
             L2Transaction::Deposit(_tx) => Err(SignatureProverError::UnsupportedTransactionType),
-            L2Transaction::Withdraw(_tx) => Err(SignatureProverError::UnsupportedTransactionType),
+            L2Transaction::Withdraw(tx) => {
+                let account = tx.user_acct().clone();
+                let proof = tx.user_proof().clone();
+                let msg_hash = tx.user_msg_hash();
+                self.validate_withdraw_auth_inputs(&account, &msg_hash, &proof, &auth_inputs)?;
+                Ok(AuthRequest {
+                    tx: L2Transaction::Withdraw(tx),
+                    auth: AccountAuthInputs::new(account, msg_hash, auth_inputs),
+                })
+            }
             L2Transaction::Update(tx) => {
                 let account = tx.user_acct().clone();
                 let proof = tx.user_proof().clone();
@@ -204,12 +213,29 @@ where
 
     pub fn validate_withdraw_auth_inputs(
         &self,
-        _account: &KeystoreAccount,
-        _msg_hash: &B256,
-        _proof: &Bytes,
-        _auth_inputs: &AuthInputs,
+        account: &KeystoreAccount,
+        msg_hash: &B256,
+        proof: &Bytes,
+        auth_inputs: &AuthInputs,
     ) -> Result<(), SignatureProverError> {
-        Err(SignatureProverError::UnsupportedTransactionType)
+        if account.vkey != self.vkey {
+            return Err(SignatureProverError::UnsupportedVerificationKey);
+        }
+
+        if !proof.is_empty() {
+            return Err(SignatureProverError::ProofAlreadyExists);
+        }
+
+        let auth_inputs_decoded = self
+            .auth_inputs_decoder
+            .decode(auth_inputs.clone(), *msg_hash)
+            .map_err(|err| SignatureProverError::AuthInputsDecodeError(err.to_string()))?;
+
+        self.prover_input_validator
+            .validate(auth_inputs_decoded)
+            .map_err(|err| SignatureProverError::ValidationFailed(err.to_string()))?;
+
+        Ok(())
     }
 
     pub fn validate_update_auth_inputs(
@@ -244,11 +270,11 @@ where
 mod tests {
     use crate::{
         error::SignatureProverError,
-        keystore_types::{KeystoreAccount, UpdateTransactionBuilder},
+        keystore_types::{KeystoreAccount, UpdateTransactionBuilder, WithdrawTransactionBuilder},
         AuthInputs, AuthInputsDecoder, KeystoreAccountWithData, SponsoredAuthInputs,
     };
 
-    use alloy_primitives::{keccak256, Bytes, FixedBytes, B256, U256};
+    use alloy_primitives::{keccak256, Address, Bytes, FixedBytes, B256, U256};
 
     use super::{SignatureProverInputValidator, SignatureProverValidator};
 
@@ -296,10 +322,22 @@ mod tests {
 
     fn update_tx_builder() -> UpdateTransactionBuilder {
         let acct = KeystoreAccount::with_salt(FixedBytes::ZERO, FixedBytes::random(), VKEY);
-        UpdateTransactionBuilder::sequencer_tx(U256::from(100))
+        UpdateTransactionBuilder::default()
+            .fee_per_gas(U256::from(100))
             .nonce(U256::from(0))
             .new_user_data(Bytes::from_static(&[1u8; 22]))
             .new_user_vkey(Bytes::from_static(&[1u8; 22]))
+            .user_acct(acct.clone())
+            .user_proof(Bytes::default())
+    }
+
+    fn withdarw_tx_builder() -> WithdrawTransactionBuilder {
+        let acct = KeystoreAccount::with_salt(FixedBytes::ZERO, FixedBytes::random(), VKEY);
+        WithdrawTransactionBuilder::default()
+            .fee_per_gas(U256::from(100))
+            .nonce(U256::from(0))
+            .amt(U256::from(100))
+            .to(Address::random())
             .user_acct(acct.clone())
             .user_proof(Bytes::default())
     }
@@ -321,10 +359,15 @@ mod tests {
     fn test_validate_auth_request_successful() {
         let validator = signature_prover_validator();
 
-        let tx = update_tx_builder().build().unwrap();
+        let update_tx = update_tx_builder().build().unwrap();
         let auth_inputs: AuthInputs = MockInput.into();
 
-        let res = validator.validate_auth_request(tx.into_tx_bytes(), auth_inputs);
+        let res = validator.validate_auth_request(update_tx.into_tx_bytes(), auth_inputs);
+        assert!(res.is_ok());
+
+        let withdraw_tx = withdarw_tx_builder().build().unwrap();
+        let auth_inputs: AuthInputs = MockInput.into();
+        let res = validator.validate_auth_request(withdraw_tx.into_tx_bytes(), auth_inputs);
         assert!(res.is_ok());
     }
 

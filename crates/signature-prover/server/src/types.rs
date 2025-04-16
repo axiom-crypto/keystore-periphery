@@ -265,7 +265,7 @@ pub fn tx_with_proofs(
 }
 
 pub(crate) fn parse_tx(raw_tx: Bytes) -> Result<L2Transaction, SignatureProverError> {
-    let tx = L2Transaction::decode_tx_bytes(raw_tx)
+    let tx = L2Transaction::decode_sequencer_batch_tx_bytes(raw_tx)
         .map_err(|_| SignatureProverError::TransactionDecodeFailed)?;
     Ok(tx)
 }
