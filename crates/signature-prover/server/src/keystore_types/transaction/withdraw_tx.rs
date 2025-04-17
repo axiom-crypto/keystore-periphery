@@ -238,7 +238,7 @@ impl WithdrawTransactionBuilderError {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct WithdrawTransactionBuilder {
     nonce: Option<U256>,
     fee_per_gas: Option<U256>,
@@ -249,6 +249,21 @@ pub struct WithdrawTransactionBuilder {
     user_proof: Option<Bytes>,
 
     mock_user_proof: bool,
+}
+
+impl From<WithdrawTransaction> for WithdrawTransactionBuilder {
+    fn from(withdraw_tx: WithdrawTransaction) -> Self {
+        Self {
+            nonce: Some(withdraw_tx.nonce),
+            fee_per_gas: withdraw_tx.fee_per_gas.into_option(),
+            l1_initiated_nonce: withdraw_tx.l1_initiated_nonce.into_option(),
+            to: Some(withdraw_tx.to),
+            amt: Some(withdraw_tx.amt),
+            user_acct: Some(withdraw_tx.user_acct),
+            user_proof: Some(withdraw_tx.user_proof),
+            mock_user_proof: false,
+        }
+    }
 }
 
 impl WithdrawTransactionBuilder {

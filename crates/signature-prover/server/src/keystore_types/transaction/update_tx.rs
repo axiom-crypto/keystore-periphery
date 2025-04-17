@@ -276,7 +276,7 @@ impl UpdateTransactionBuilderError {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct UpdateTransactionBuilder {
     nonce: Option<U256>,
     fee_per_gas: Option<U256>,

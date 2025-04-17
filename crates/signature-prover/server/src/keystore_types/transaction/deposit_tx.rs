@@ -111,7 +111,7 @@ impl DepositTransactionBuilderError {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct DepositTransactionBuilder {
     l1_initiated_nonce: Option<U256>,
     amt: Option<U256>,

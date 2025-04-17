@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use crate::keystore_types::{
     KeystoreAccount, L2Transaction, RollupTx, TxDecode, UpdateTransaction,
+    UpdateTransactionBuilder, WithdrawTransactionBuilder,
 };
 use alloy_primitives::{Bytes, B256};
 use serde::{Deserialize, Serialize};
@@ -233,33 +234,35 @@ pub fn tx_with_proofs(
 ) -> Result<L2Transaction, SignatureProverError> {
     match tx {
         L2Transaction::Deposit(_tx) => Err(SignatureProverError::UnsupportedTransactionType),
-        L2Transaction::Withdraw(_tx) => Err(SignatureProverError::UnsupportedTransactionType),
+        L2Transaction::Withdraw(tx) => {
+            let mut tx_builder = WithdrawTransactionBuilder::from(tx);
+
+            if let Some(user_proof) = user_proof {
+                tx_builder = tx_builder.user_proof(user_proof.into());
+            }
+
+            let l2_tx = tx_builder
+                .build()
+                .map_err(|err| SignatureProverError::Internal(err.to_string()))?
+                .into();
+            Ok(l2_tx)
+        }
         L2Transaction::Update(tx) => {
-            let user_proof = if let Some(user_proof) = user_proof {
-                user_proof.into()
-            } else {
-                tx.user_proof().clone()
-            };
+            let mut tx_builder = UpdateTransactionBuilder::from(tx);
 
-            let sponsor_proof = if let Some(sponsor_proof) = sponsor_proof {
-                sponsor_proof.into()
-            } else {
-                tx.sponsor_proof().clone()
-            };
+            if let Some(user_proof) = user_proof {
+                tx_builder = tx_builder.user_proof(user_proof.into());
+            }
 
-            let new_tx = UpdateTransaction::new(
-                tx.is_l1_initiated(),
-                tx.nonce(),
-                tx.fee_per_gas().clone(),
-                tx.l1_initiated_nonce().clone(),
-                tx.new_user_data().clone(),
-                tx.new_user_vkey().clone(),
-                tx.user_acct().clone(),
-                user_proof,
-                tx.sponsor_acct_bytes().clone(),
-                sponsor_proof,
-            );
-            Ok(L2Transaction::Update(new_tx))
+            if let Some(sponsor_proof) = sponsor_proof {
+                tx_builder = tx_builder.sponsor_proof(sponsor_proof.into());
+            }
+
+            let l2_tx = tx_builder
+                .build()
+                .map_err(|err| SignatureProverError::Internal(err.to_string()))?
+                .into();
+            Ok(l2_tx)
         }
     }
 }
