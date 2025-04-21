@@ -1,8 +1,8 @@
 use std::time::{Duration, Instant};
 
 use crate::keystore_types::{
-    KeystoreAccount, L2Transaction, RollupTx, TxDecode, UpdateTransaction,
-    UpdateTransactionBuilder, WithdrawTransactionBuilder,
+    KeystoreAccount, L2Transaction, RollupTx, TxDecode, UpdateTransactionBuilder,
+    WithdrawTransactionBuilder,
 };
 use alloy_primitives::{Bytes, B256};
 use serde::{Deserialize, Serialize};
