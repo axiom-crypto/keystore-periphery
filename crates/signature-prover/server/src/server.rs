@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     error::SignatureProverError,
-    keystore_types::{KeystoreAccount, L2Transaction, RollupTx},
+    keystore_types::{KeystoreAccount, L2Transaction, RollupTx, UpdateTransactionBuilder},
     parse_tx, tx_with_proofs, AccountAuthInputs, AuthInputs, AuthRequest, AuthRequestStatus,
     KeystoreAccountWithData, ServerArgs, SignatureProverApiServer, SponsorAuthState,
     SponsoredAuthInputs, SponsoredAuthRequest, TimestampedEntry,
@@ -281,10 +281,10 @@ where
             // we should combine these two updates in the future
             let unauthenticated_transaction = if let SponsoredAuthInputs::SponsorAndProve { .. } = auth_inputs {
                 let tx = parse_tx(unauthenticated_transaction)?;
-                if let L2Transaction::Update(mut tx) = tx {
+                if let L2Transaction::Update(tx) = tx {
                     let sponsor = self.sponsor.as_ref().ok_or(SignatureProverError::ServerSponsorshipNotSupported)?;
-                    tx.set_sponsor(sponsor.account.clone());
-                    tx.into_tx_bytes()
+                    let sponsored_tx = UpdateTransactionBuilder::from(tx).sponsor_acct(Some(sponsor.account.clone())).build().map_err(|err| SignatureProverError::Internal(err.to_string()))?;
+                    sponsored_tx.into_tx_bytes()
                 } else {
                     return Err(SignatureProverError::UnsupportedTransactionType);
                 }

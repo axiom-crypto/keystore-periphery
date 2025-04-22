@@ -9,9 +9,10 @@ pub use decoder::*;
 mod transaction;
 pub use transaction::*;
 
+pub mod contract;
+
 pub type L2TransactionHash = B256;
 
-#[allow(unused)]
 pub trait RollupTx {
     fn tx_bytes(&self) -> &Bytes;
 

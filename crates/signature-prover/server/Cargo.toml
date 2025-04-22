@@ -21,9 +21,11 @@ toml.workspace = true
 thiserror.workspace = true
 lazy_static.workspace = true
 
+alloy-contract = { workspace = true }
+
 alloy-primitives = { workspace = true, features = ["serde", "getrandom"] }
 alloy-rlp = { workspace = true }
-alloy-sol-types = { workspace = true, default-features = false }
+alloy-sol-types = { workspace = true, features = ["json"] }
 alloy-dyn-abi = { workspace = true }
 
 openvm-sdk = { workspace = true }

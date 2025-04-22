@@ -23,21 +23,23 @@ signature-prover-server = { path = "signature-prover/server", default-features =
 
 alloy-consensus = { version = "0.11.1", default-features = false }
 alloy-contract = "0.11.1"
-alloy-dyn-abi = { version = "0.8.21", default-features = false }
 alloy-json-rpc = { version = "0.11.1", default-features = false }
 alloy-network = { version = "0.11.1", default-features = false }
 alloy-primitives = { version = "0.8.21", default-features = false }
 alloy-provider = { version = "0.11.1", default-features = false }
 alloy-pubsub = { version = "0.11.1", default-features = false }
-alloy-rlp = { version = "0.3.11", default-features = false }
 alloy-rpc-types-eth = { version = "0.11.1", default-features = false }
 alloy-rpc-client = { version = "0.11.1", default-features = false }
 alloy-signer = { version = "0.11.1", default-features = false }
 alloy-signer-local = "0.11.1"
-alloy-sol-macro = { version = "0.8.21", default-features = false }
-alloy-sol-types = { version = "0.8.21", default-features = false }
 alloy-transport = { version = "0.11.1", default-features = false }
 alloy-transport-http = { version = "0.11.1", default-features = false }
+
+alloy-dyn-abi = { version = "0.8.21", default-features = false }
+alloy-sol-macro = { version = "0.8.21", default-features = false }
+alloy-sol-types = { version = "0.8.21", default-features = false }
+
+alloy-rlp = { version = "0.3.11", default-features = false }
 
 op-alloy-network = "0.1.5"
 op-alloy-rpc-types = "0.1.5"
