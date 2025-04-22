@@ -75,7 +75,7 @@ hex-literal = "0.4.1"
 async-trait = "0.1.85"
 toml = "0.8"
 
-tokio = { version = "1.29.1", default-features = false }
+tokio = { version = "1.44.2", default-features = false }
 
 jsonrpsee = { version = "0.24.7", default-features = false }
 tower = { version = "0.4.13", default-features = false }
