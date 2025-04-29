@@ -7,6 +7,10 @@ import { ECDSAConsumer } from "../test/example/ECDSAConsumer.sol";
 
 import { Script, safeconsole as console } from "forge-std/Script.sol";
 
+import { stdJson as StdJson } from "forge-std/StdJson.sol";
+
+using StdJson for string;
+
 contract KeystoreValidatorScript is Script {
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
     string internal constant TEST_MNEMONIC = "test test test test test test test test test test test junk";
@@ -14,6 +18,8 @@ contract KeystoreValidatorScript is Script {
     address internal broadcaster;
 
     string internal mnemonic;
+
+    string configPath = "./deployment-config/KeystoreValidator.json";
 
     modifier broadcast() {
         vm.startBroadcast(broadcaster);
@@ -31,16 +37,18 @@ contract KeystoreValidatorScript is Script {
         }
     }
 
-    function run() external broadcast returns (StorageProofVerifier, KeystoreValidator) {
+    function run() external broadcast returns (StorageProofVerifier) {
+        string memory config = vm.readFile(configPath);
+        address bridge = vm.parseJsonAddress(config, ".bridge");
+
         StorageProofVerifier storageProofVerifier = new StorageProofVerifier();
 
         KeystoreValidator validator = new KeystoreValidator(
-            storageProofVerifier,
-            0x9142BfBbA6eA6471C9eb9C39b3492F48B9a51EbF,
-            0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
+            storageProofVerifier, bridge, 0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
         );
-        validator.deployAndRegisterKeyDataConsumer(type(ECDSAConsumer).creationCode);
 
-        return (storageProofVerifier, validator);
+        console.log("Deployed KeystoreValidator: %s", address(validator));
+
+        return storageProofVerifier;
     }
 }
