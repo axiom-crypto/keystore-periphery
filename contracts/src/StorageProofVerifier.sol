@@ -5,6 +5,8 @@ import { RLPReader } from "./vendor/optimism-mpt/rlp/RLPReader.sol";
 import { SecureMerkleTrie } from "./vendor/optimism-mpt/trie/SecureMerkleTrie.sol";
 import { IStorageProofVerifier } from "./interfaces/IStorageProofVerifier.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract StorageProofVerifier is IStorageProofVerifier {
     error InvalidBlockHeader();
 

@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import { KeystoreStateOracle } from "../src/KeystoreStateOracle.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
+import { KeystoreIMT } from "../src/libraries/KeystoreIMT.sol";
 import { ECDSAConsumer } from "./example/ECDSAConsumer.sol";
 import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
 import { IStorageProofVerifier } from "../src/interfaces/IStorageProofVerifier.sol";
+import { IKeystoreStateOracle } from "../src/interfaces/IKeystoreStateOracle.sol";
 
 import { RhinestoneModuleKit, ModuleKitHelpers, AccountInstance, UserOpData } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/accounts/common/interfaces/IERC7579Module.sol";
@@ -20,7 +23,9 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for AccountInstance;
 
     AccountInstance internal instance;
+    KeystoreStateOracle internal stateOracle;
     KeystoreValidator internal validator;
+    ECDSAConsumer internal consumer;
 
     address ownerSigner = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     uint256 ownerSignerKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
@@ -36,41 +41,49 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         init();
 
         newStorageProofVerifier = (new StorageProofVerifier());
-
-        validator = new KeystoreValidator(
+        stateOracle = new KeystoreStateOracle(
             newStorageProofVerifier,
-            0x829ce5730041De079995F7E7D9749E11F36Da0Bc,
-            0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d001
+            0xC6011d6b4b11948D733198277B3729d195c99f9D,
+            0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
         );
+        validator = new KeystoreValidator(stateOracle);
+        consumer = new ECDSAConsumer();
+
         vm.label(address(validator), "KeystoreValidator");
 
         instance = makeAccountInstance("KeystoreECDSAAccount");
         vm.deal(address(instance.account), 10 ether);
 
-        vm.warp(1_736_565_242);
+        vm.warp(1_746_128_944);
     }
 
     function test_1() public {
         vm.store(
             0x4200000000000000000000000000000000000015,
             bytes32(uint256(0x02)),
-            0x9d1cb7a93eaed952b60cc8f8bd367a163f6fde8ca65b45579c9b242ff5748552
+            0x2630da9d21d8635092147007d9d0f82625f533e5342a7072049b0b0147120d67
         );
 
-        validator.cacheBlockhash();
-        validator.deployAndRegisterKeyDataConsumer(type(ECDSAConsumer).creationCode);
+        stateOracle.cacheBlockhash();
 
         (bytes memory blockHeader, bytes[] memory accountProof, bytes[] memory storageProof) =
             _readStorageProof("proofs/Exclusion.json");
 
         IStorageProofVerifier.StorageProof memory _storageProof = IStorageProofVerifier.StorageProof({
-            storageValue: bytes32(0x3c88834ecd749dae9348033b2a889acad890fa045f84061d2347dba67facda8c),
+            storageValue: bytes32(0x9c3f91a6c0f5292138e31ad6bce17ba57d367a572fc8322646c374571a5985a1),
             blockHeader: blockHeader,
             accountProof: accountProof,
             storageProof: storageProof
         });
 
-        validator.cacheKeystoreStateRoot(_storageProof);
+        stateOracle.cacheKeystoreStateRoot(
+            _storageProof,
+            IKeystoreStateOracle.OutputRootPreimage({
+                stateRoot: bytes32(0x3c88834ecd749dae9348033b2a889acad890fa045f84061d2347dba67facda8c),
+                withdrawalsRoot: bytes32(0x0000000000000000000000000000000000000000000000000000000000000000),
+                lastValidBlockhash: bytes32(0x0000000000000000000000000000000000000000000000000000000000000000)
+            })
+        );
 
         address[] memory allowedSignersList = new address[](1);
         allowedSignersList[0] = ownerSigner;
@@ -96,7 +109,7 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         proof[17] = 0x314621349ffe6aca302f3492052670cd2c62a30a90ff0ceb3c185fbd7a42ec88;
         proof[18] = 0xdcf51acaac269aea518fe315fff18ba82424d138c1ac4bbfe2ec2f947e9af6a7;
 
-        bytes32 keyDataConsumerCodehash = keccak256(type(ECDSAConsumer).creationCode);
+        bytes32 keyDataConsumerCodehash = address(consumer).codehash;
         bytes memory keyData =
             abi.encodePacked(bytes1(0x00), abi.encode(keyDataConsumerCodehash, 1, allowedSignersList));
 
@@ -105,48 +118,62 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         bytes32 vkeyHash = keccak256("vkey");
 
         bytes32 keystoreAddress = keccak256(abi.encodePacked(salt, dataHash, vkeyHash));
-        KeystoreValidator.KeyDataMerkleProof memory keyDataMerkleProof = KeystoreValidator.KeyDataMerkleProof({
-            isExclusion: true,
-            exclusionExtraData: hex"01030303030303030303030303030303030303030303030303030303030303030300000000000000000000000000000000000000000000000000000000000000004a7a4de37def8e10861261f58e1003e6086df449b615bb411c39669548e19dba",
-            nextDummyByte: 0x00,
-            nextImtKey: 0x0000000000000000000000000000000000000000000000000000000000000000,
-            vkeyHash: vkeyHash,
-            keyData: keyData,
-            proof: proof,
-            isLeft: 524_284
-        });
+        // KeystoreIMT.KeyDataMerkleProof memory keyDataMerkleProof = KeystoreIMT.KeyDataMerkleProof({
+        //     isExclusion: true,
+        //     exclusionExtraData: hex"01030303030303030303030303030303030303030303030303030303030303030300000000000000000000000000000000000000000000000000000000000000004a7a4de37def8e10861261f58e1003e6086df449b615bb411c39669548e19dba",
+        //     nextDummyByte: 0x00,
+        //     nextImtKey: 0x0000000000000000000000000000000000000000000000000000000000000000,
+        //     vkeyHash: vkeyHash,
+        //     keyData: keyData,
+        //     proof: proof,
+        //     isLeft: 524_284
+        // });
+        bytes memory keyDataProof = abi.encode(
+            true,
+            hex"01030303030303030303030303030303030303030303030303030303030303030300000000000000000000000000000000000000000000000000000000000000004a7a4de37def8e10861261f58e1003e6086df449b615bb411c39669548e19dba",
+            0x00,
+            0x0000000000000000000000000000000000000000000000000000000000000000,
+            vkeyHash,
+            keyData,
+            proof,
+            524_284
+        );
 
-        UserOpData memory userOpData =
-            instance.getExecOps({ target: target, value: value, callData: "", txValidator: address(validator) });
+        (PackedUserOperation memory userOp, bytes memory userOpSig) =
+            prepareAndSignUserOp(instance, target, address(validator), ownerSignerKey);
+
+        bytes memory sig = abi.encode(keyDataProof, consumer, userOpSig);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = userOpData.userOp;
-        userOps[0].initCode = hex"";
-
-        (uint8 v, bytes32 r, bytes32 s) =
-            vm.sign(ownerSignerKey, this.userOpHash(userOps[0], address(instance.aux.entrypoint), block.chainid));
-
-        bytes memory userOpSig = abi.encodePacked(r, s, v);
-
-        bytes memory sig = abi.encode(keyDataMerkleProof, userOpSig);
-
+        userOps[0] = userOp;
         userOps[0].signature = sig;
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
-            data: abi.encode(100_000 days, keystoreAddress)
+            data: abi.encode(3650 days, 3600 seconds, keystoreAddress)
         });
 
         uint256 prevBalance = target.balance;
 
         instance.aux.entrypoint.handleOps(userOps, payable(address(this)));
 
-        assertEq(target.balance, prevBalance + value);
+        assertEq(target.balance, prevBalance + value, "Value not transferred");
+
+        (PackedUserOperation memory userOp2, bytes memory userOpSig2) =
+            prepareAndSignUserOp(instance, target, address(validator), ownerSignerKey);
+
+        userOps[0] = userOp2;
+        // Use cache
+        userOps[0].signature = abi.encode(hex"", consumer, userOpSig2);
+
+        instance.aux.entrypoint.handleOps(userOps, payable(address(this)));
+
+        assertEq(target.balance, prevBalance + (value * 2), "Cached read failed");
     }
 
     // TODO: Move this to a separate test file
-    function test_unpaddedStorageProof() public {
+    function test_unpaddedStorageProof() public view {
         (bytes memory blockHeader, bytes[] memory accountProof, bytes[] memory storageProof) =
             _readStorageProof("proofs/UnpaddedStorageProof.json");
 
@@ -180,6 +207,23 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         returns (bytes32)
     {
         return keccak256(abi.encode(UserOperationLib.hash(userOp), _entrypoint, chainId));
+    }
+
+    function prepareAndSignUserOp(
+        AccountInstance memory _instance,
+        address _target,
+        address txValidator,
+        uint256 signerPrivateKey
+    ) internal returns (PackedUserOperation memory userOp, bytes memory sig) {
+        UserOpData memory userOpData =
+            _instance.getExecOps({ target: _target, value: value, callData: hex"", txValidator: txValidator });
+        userOp = userOpData.userOp;
+        userOp.initCode = hex"";
+
+        (uint8 v, bytes32 r, bytes32 s) =
+            vm.sign(signerPrivateKey, this.userOpHash(userOp, address(instance.aux.entrypoint), block.chainid));
+
+        sig = abi.encodePacked(r, s, v);
     }
 
     receive() external payable { }
