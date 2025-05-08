@@ -36,24 +36,24 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         bytes32 keystoreAddress;
         // If a keystore state root was read from an L1 block with timestamp
         // `x`, then key data reads from this keystore state root via Merkle
-        // proofs are valid until `x + stateRootValidityWindow`.
+        // proofs are valid until `x + stateRootValidityInterval`.
         //
         // Since this value is added to an `l1BlockTimestamp` which is allocated
         // 48 bits of space, there are no concerns of overflow until the L1
         // block timestamp hits 2 ^ 48 - 2 ^ 32.
         //
         // This value is set by the smart account.
-        uint32 stateRootValidityWindow;
+        uint32 stateRootValidityInterval;
         // If a key data read was cached from a keystore state root which was
         // read from an L1 block with timestamp `x`, then the cached key data is
-        // valid until `x + cacheInvalidationTime`.
+        // valid until `x + cacheValidityInterval`.
         //
         // Since this value is added to an `l1BlockTimestamp` which is allocated
         // 48 bits of space, there are no concerns of overflow until the L1
         // block timestamp hits 2 ^ 48 - 2 ^ 32.
         //
         // This value is set by the smart account.
-        uint32 cacheInvalidationTime;
+        uint32 cacheValidityInterval;
         // The timestamp at which the cache is invalidated.
         uint48 cacheInvalidationTimestamp;
         // If key data was read (and cached) from a keystore state root which
@@ -99,13 +99,13 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress != bytes32(0)) revert AlreadyInitialized(msg.sender);
 
-        (uint32 stateRootValidityWindow, uint32 cacheInvalidationTime, bytes32 keystoreAddress) =
+        (uint32 stateRootValidityInterval, uint32 cacheValidityInterval, bytes32 keystoreAddress) =
             abi.decode(data, (uint32, uint32, bytes32));
 
         if (keystoreAddress == bytes32(0)) revert InvalidKeystoreAddress();
 
-        $.stateRootValidityWindow = stateRootValidityWindow;
-        $.cacheInvalidationTime = cacheInvalidationTime;
+        $.stateRootValidityInterval = stateRootValidityInterval;
+        $.cacheValidityInterval = cacheValidityInterval;
         $.keystoreAddress = keystoreAddress;
     }
 
@@ -169,18 +169,18 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
             uint48 blockTimestamp = uint48(KEYSTORE_STATE_ORACLE.keystoreStateRoots(derivedImtRoot));
             if (blockTimestamp == 0) revert StateRootNotFound(derivedImtRoot);
 
-            uint48 stateRootValidityWindow = $.stateRootValidityWindow;
+            uint48 stateRootValidityInterval = $.stateRootValidityInterval;
 
             validAfter = blockTimestamp;
-            validUntil = blockTimestamp + stateRootValidityWindow;
+            validUntil = blockTimestamp + stateRootValidityInterval;
 
             // The cache is only updated if the state from which the key data is
             // read is fresher than the previous cache.
             uint48 cachedStateRootTimestamp = $.cachedStateRootTimestamp;
-            if (validUntil > cachedStateRootTimestamp + stateRootValidityWindow || cachedStateRootTimestamp == 0) {
+            if (validUntil > cachedStateRootTimestamp + stateRootValidityInterval || cachedStateRootTimestamp == 0) {
                 $.cachedKeyData = keyData;
                 $.cachedStateRootTimestamp = blockTimestamp;
-                $.cacheInvalidationTimestamp = blockTimestamp + $.cacheInvalidationTime;
+                $.cacheInvalidationTimestamp = blockTimestamp + $.cacheValidityInterval;
             }
         } else {
             // Read key data from cache, skipping the need for a Merkle proof
@@ -242,22 +242,22 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
 
     /// @notice Update the state root invalidation time for the smart account
     ///
-    /// @param newStateRootValidityWindow The new state root validity window
-    function setStateRootValidityWindow(uint32 newStateRootValidityWindow) external {
+    /// @param newstateRootValidityInterval The new state root validity window
+    function setstateRootValidityInterval(uint32 newstateRootValidityInterval) external {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress == bytes32(0)) revert NotInitialized(msg.sender);
 
-        $.stateRootValidityWindow = newStateRootValidityWindow;
+        $.stateRootValidityInterval = newstateRootValidityInterval;
     }
 
     /// @notice Update the cache invalidation time for the smart account
     ///
-    /// @param newCacheInvalidationTime The new cache invalidation time
-    function setCacheInvalidationTime(uint32 newCacheInvalidationTime) external {
+    /// @param newcacheValidityInterval The new cache invalidation time
+    function setcacheValidityInterval(uint32 newcacheValidityInterval) external {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress == bytes32(0)) revert NotInitialized(msg.sender);
 
-        $.cacheInvalidationTime = newCacheInvalidationTime;
+        $.cacheValidityInterval = newcacheValidityInterval;
     }
 
     function isValidSignatureWithSender(address, bytes32, bytes calldata) external pure override returns (bytes4) {
