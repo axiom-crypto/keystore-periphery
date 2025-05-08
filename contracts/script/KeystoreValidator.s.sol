@@ -44,10 +44,11 @@ contract KeystoreValidatorScript is Script {
 
         StorageProofVerifier storageProofVerifier = new StorageProofVerifier();
 
-        KeystoreStateOracle stateOracle = new KeystoreStateOracle(
-            storageProofVerifier, bridge, 0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
-        );
-
+        KeystoreStateOracle stateOracle = new KeystoreStateOracle({
+            _storageProofVerifier: storageProofVerifier,
+            keystoreBridgeAddress: bridge,
+            keystoreStateRootStorageSlot: 0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
+        });
         KeystoreValidator validator = new KeystoreValidator(stateOracle);
 
         return (storageProofVerifier, stateOracle, validator);
