@@ -36,14 +36,14 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         bytes32 keystoreAddress;
         // If a keystore state root was read from an L1 block with timestamp
         // `x`, then key data reads from this keystore state root via Merkle
-        // proofs are valid until `x + stateRootInvalidationTime`.
+        // proofs are valid until `x + stateRootValidityWindow`.
         //
         // Since this value is added to an `l1BlockTimestamp` which is allocated
         // 48 bits of space, there are no concerns of overflow until the L1
         // block timestamp hits 2 ^ 48 - 2 ^ 32.
         //
         // This value is set by the smart account.
-        uint32 stateRootInvalidationTime;
+        uint32 stateRootValidityWindow;
         // If a key data read was cached from a keystore state root which was
         // read from an L1 block with timestamp `x`, then the cached key data is
         // valid until `x + cacheInvalidationTime`.
@@ -54,6 +54,8 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         //
         // This value is set by the smart account.
         uint32 cacheInvalidationTime;
+        // The timestamp at which the cache is invalidated.
+        uint48 cacheInvalidationTimestamp;
         // If key data was read (and cached) from a keystore state root which
         // was read from an L1 block with timestamp `x`, then
         // `cachedStateRootTimestamp` is equal to `x`.
@@ -97,12 +99,12 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress != bytes32(0)) revert AlreadyInitialized(msg.sender);
 
-        (uint32 stateRootInvalidationTime, uint32 cacheInvalidationTime, bytes32 keystoreAddress) =
+        (uint32 stateRootValidityWindow, uint32 cacheInvalidationTime, bytes32 keystoreAddress) =
             abi.decode(data, (uint32, uint32, bytes32));
 
         if (keystoreAddress == bytes32(0)) revert InvalidKeystoreAddress();
 
-        $.stateRootInvalidationTime = stateRootInvalidationTime;
+        $.stateRootValidityWindow = stateRootValidityWindow;
         $.cacheInvalidationTime = cacheInvalidationTime;
         $.keystoreAddress = keystoreAddress;
     }
@@ -167,17 +169,18 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
             uint48 blockTimestamp = uint48(KEYSTORE_STATE_ORACLE.keystoreStateRoots(derivedImtRoot));
             if (blockTimestamp == 0) revert StateRootNotFound(derivedImtRoot);
 
-            uint48 stateRootInvalidationTime = $.stateRootInvalidationTime;
+            uint48 stateRootValidityWindow = $.stateRootValidityWindow;
 
             validAfter = blockTimestamp;
-            validUntil = blockTimestamp + stateRootInvalidationTime;
+            validUntil = blockTimestamp + stateRootValidityWindow;
 
             // The cache is only updated if the state from which the key data is
             // read is fresher than the previous cache.
             uint48 cachedStateRootTimestamp = $.cachedStateRootTimestamp;
-            if (validUntil > cachedStateRootTimestamp + stateRootInvalidationTime || cachedStateRootTimestamp == 0) {
+            if (validUntil > cachedStateRootTimestamp + stateRootValidityWindow || cachedStateRootTimestamp == 0) {
                 $.cachedKeyData = keyData;
                 $.cachedStateRootTimestamp = blockTimestamp;
+                $.cacheInvalidationTimestamp = blockTimestamp + $.cacheInvalidationTime;
             }
         } else {
             // Read key data from cache, skipping the need for a Merkle proof
@@ -192,7 +195,7 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
             keyData = $.cachedKeyData;
 
             validAfter = cachedStateRootTimestamp;
-            validUntil = cachedStateRootTimestamp + $.cacheInvalidationTime;
+            validUntil = $.cacheInvalidationTimestamp;
         }
 
         bytes32 authorizedCodehash = _getKDCCodehash(keyData);
@@ -239,12 +242,12 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
 
     /// @notice Update the state root invalidation time for the smart account
     ///
-    /// @param newStateRootInvalidationTime The new state root invalidation time
-    function setStateRootInvalidationTime(uint32 newStateRootInvalidationTime) external {
+    /// @param newStateRootValidityWindow The new state root validity window
+    function setStateRootValidityWindow(uint32 newStateRootValidityWindow) external {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress == bytes32(0)) revert NotInitialized(msg.sender);
 
-        $.stateRootInvalidationTime = newStateRootInvalidationTime;
+        $.stateRootValidityWindow = newStateRootValidityWindow;
     }
 
     /// @notice Update the cache invalidation time for the smart account
