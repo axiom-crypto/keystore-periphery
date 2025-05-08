@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
+import { OPStackStateOracle } from "../src/state/OPStackStateOracle.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
 import { ECDSAConsumer } from "../test/example/ECDSAConsumer.sol";
 
@@ -37,18 +38,19 @@ contract KeystoreValidatorScript is Script {
         }
     }
 
-    function run() external broadcast returns (StorageProofVerifier) {
+    function run() external broadcast returns (StorageProofVerifier, OPStackStateOracle, KeystoreValidator) {
         string memory config = vm.readFile(configPath);
         address bridge = vm.parseJsonAddress(config, ".bridge");
 
         StorageProofVerifier storageProofVerifier = new StorageProofVerifier();
 
-        KeystoreValidator validator = new KeystoreValidator(
-            storageProofVerifier, bridge, 0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
-        );
+        OPStackStateOracle stateOracle = new OPStackStateOracle({
+            _storageProofVerifier: storageProofVerifier,
+            keystoreBridgeAddress: bridge,
+            keystoreStateRootStorageSlot: 0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
+        });
+        KeystoreValidator validator = new KeystoreValidator(stateOracle);
 
-        console.log("Deployed KeystoreValidator: %s", address(validator));
-
-        return storageProofVerifier;
+        return (storageProofVerifier, stateOracle, validator);
     }
 }
