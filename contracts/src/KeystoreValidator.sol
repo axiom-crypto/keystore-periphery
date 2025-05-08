@@ -270,7 +270,7 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
     }
 
     function moduleId() external pure returns (string memory) {
-        return "axiom.ecdsa.v0.1.0";
+        return "axiom.keystore.v0.2.4";
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
