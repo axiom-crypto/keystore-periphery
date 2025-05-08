@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import { IStorageProofVerifier } from "../interfaces/IStorageProofVerifier.sol";
+import { IL1Block } from "../interfaces/IL1Block.sol";
+import { RLPReader } from "../vendor/optimism-mpt/rlp/RLPReader.sol";
+import { KeystoreStateOracle } from "./KeystoreStateOracle.sol";
+
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IL1Block } from "./interfaces/IL1Block.sol";
-import { IStorageProofVerifier } from "./interfaces/IStorageProofVerifier.sol";
-import { RLPReader } from "./vendor/optimism-mpt/rlp/RLPReader.sol";
-import { IKeystoreStateOracle } from "./interfaces/IKeystoreStateOracle.sol";
-
-contract KeystoreStateOracle is Ownable2Step, IKeystoreStateOracle {
+contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
     address internal constant L1BLOCK = 0x4200000000000000000000000000000000000015;
 
     event BlockhashCached(bytes32 _blockhash);
@@ -18,25 +18,18 @@ contract KeystoreStateOracle is Ownable2Step, IKeystoreStateOracle {
 
     error BlockhashNotFound(bytes32 _blockhash);
 
-    error InvalidOutputRoot(bytes32 derivedOutputRoot, bytes32 keystoreOutputRoot);
-
-    bytes32 public latestStateRoot;
     mapping(bytes32 _blockhash => bool) public blockhashes;
-    mapping(bytes32 keystoreStateRoot => uint48 l1BlockTimestamp) public keystoreStateRoots;
 
     IStorageProofVerifier public storageProofVerifier;
-    address public immutable KEYSTORE_BRIDGE_ADDRESS;
-    bytes32 public immutable KEYSTORE_STATE_ROOT_STORAGE_SLOT;
 
-    // We probably won't want to use `msg.sender` if using a factory for deployment
+    // TODO: We need to move away from `msg.sender` as the owner of the contract
+    // to support factory deployment
     constructor(
         IStorageProofVerifier _storageProofVerifier,
         address keystoreBridgeAddress,
         bytes32 keystoreStateRootStorageSlot
-    ) Ownable(msg.sender) {
+    ) Ownable(msg.sender) KeystoreStateOracle(keystoreBridgeAddress, keystoreStateRootStorageSlot) {
         storageProofVerifier = _storageProofVerifier;
-        KEYSTORE_BRIDGE_ADDRESS = keystoreBridgeAddress;
-        KEYSTORE_STATE_ROOT_STORAGE_SLOT = keystoreStateRootStorageSlot;
     }
 
     function updateStorageProofVerifier(IStorageProofVerifier _newVerifier) external onlyOwner {
@@ -62,7 +55,7 @@ contract KeystoreStateOracle is Ownable2Step, IKeystoreStateOracle {
         blockhashes[_blockhash] = true;
     }
 
-    function cacheKeystoreStateRoot(
+    function cacheKeystoreStateRootWithProof(
         IStorageProofVerifier.StorageProof calldata storageProof,
         OutputRootPreimage calldata outputRootPreimage
     ) external {
