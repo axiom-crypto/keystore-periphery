@@ -12,7 +12,6 @@ abstract contract KeystoreStateOracle is IKeystoreStateOracle {
     address public immutable KEYSTORE_BRIDGE_ADDRESS;
     bytes32 public immutable KEYSTORE_STATE_ROOT_STORAGE_SLOT;
 
-    // We probably won't want to use `msg.sender` if using a factory for deployment
     constructor(address keystoreBridgeAddress, bytes32 keystoreStateRootStorageSlot) {
         KEYSTORE_BRIDGE_ADDRESS = keystoreBridgeAddress;
         KEYSTORE_STATE_ROOT_STORAGE_SLOT = keystoreStateRootStorageSlot;
