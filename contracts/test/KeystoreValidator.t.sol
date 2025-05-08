@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { KeystoreStateOracle } from "../src/KeystoreStateOracle.sol";
+import { OPStackStateOracle } from "../src/state/OPStackStateOracle.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
 import { KeystoreIMT } from "../src/libraries/KeystoreIMT.sol";
 import { ECDSAConsumer } from "./example/ECDSAConsumer.sol";
@@ -23,7 +23,7 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for AccountInstance;
 
     AccountInstance internal instance;
-    KeystoreStateOracle internal stateOracle;
+    OPStackStateOracle internal stateOracle;
     KeystoreValidator internal validator;
     ECDSAConsumer internal consumer;
 
@@ -41,7 +41,7 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
         init();
 
         newStorageProofVerifier = (new StorageProofVerifier());
-        stateOracle = new KeystoreStateOracle(
+        stateOracle = new OPStackStateOracle(
             newStorageProofVerifier,
             0xC6011d6b4b11948D733198277B3729d195c99f9D,
             0xc94330da5d5688c06df0ade6bfd773c87249c0b9f38b25021e2c16ab9672d000
@@ -76,7 +76,7 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
             storageProof: storageProof
         });
 
-        stateOracle.cacheKeystoreStateRoot(
+        stateOracle.cacheKeystoreStateRootWithProof(
             _storageProof,
             IKeystoreStateOracle.OutputRootPreimage({
                 stateRoot: bytes32(0x3c88834ecd749dae9348033b2a889acad890fa045f84061d2347dba67facda8c),
