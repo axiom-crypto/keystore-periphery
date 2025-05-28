@@ -21,6 +21,10 @@ import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
     /// @dev Per userOp. The expected structure of the `signature` field in
     /// `PackedUserOperation`
+    ///
+    /// Note that these fields are subject to manipulation by the bundler and/or
+    /// sequencer. While these entities cannot execute unauthenticated actions,
+    /// they can alter the caching behavior from the one intended by the user.
     struct AuthenticationData {
         // Parsed as KeystoreIMT.KeyDataMerkleProof. If empty, key data will be
         // read from local cache, skipping the need for a state root read
@@ -242,22 +246,22 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
 
     /// @notice Update the state root invalidation time for the smart account
     ///
-    /// @param newstateRootValidityInterval The new state root validity window
-    function setstateRootValidityInterval(uint32 newstateRootValidityInterval) external {
+    /// @param newStateRootValidityInterval The new state root validity window
+    function setStateRootValidityInterval(uint32 newStateRootValidityInterval) external {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress == bytes32(0)) revert NotInitialized(msg.sender);
 
-        $.stateRootValidityInterval = newstateRootValidityInterval;
+        $.stateRootValidityInterval = newStateRootValidityInterval;
     }
 
     /// @notice Update the cache invalidation time for the smart account
     ///
-    /// @param newcacheValidityInterval The new cache invalidation time
-    function setcacheValidityInterval(uint32 newcacheValidityInterval) external {
+    /// @param newCacheValidityInterval The new cache invalidation time
+    function setCacheValidityInterval(uint32 newCacheValidityInterval) external {
         AccountData storage $ = accountData[msg.sender];
         if ($.keystoreAddress == bytes32(0)) revert NotInitialized(msg.sender);
 
-        $.cacheValidityInterval = newcacheValidityInterval;
+        $.cacheValidityInterval = newCacheValidityInterval;
     }
 
     function isValidSignatureWithSender(address, bytes32, bytes calldata) external pure override returns (bytes4) {

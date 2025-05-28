@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
+import { StorageProofVerifier } from "../src/state/StorageProofVerifier.sol";
 import { OPStackStateOracle } from "../src/state/OPStackStateOracle.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
-import { ECDSAConsumer } from "../test/example/ECDSAConsumer.sol";
 
 import { Script, safeconsole as console } from "forge-std/Script.sol";
 

@@ -5,10 +5,10 @@ import { OPStackStateOracle } from "../src/state/OPStackStateOracle.sol";
 import { KeystoreValidator } from "../src/KeystoreValidator.sol";
 import { KeystoreIMT } from "../src/libraries/KeystoreIMT.sol";
 import { ECDSAConsumer } from "./example/ECDSAConsumer.sol";
-import { StorageProofVerifier } from "../src/StorageProofVerifier.sol";
+import { StorageProofVerifier } from "../src/state/StorageProofVerifier.sol";
 import { IStorageProofVerifier } from "../src/interfaces/IStorageProofVerifier.sol";
 import { IKeystoreStateOracle } from "../src/interfaces/IKeystoreStateOracle.sol";
-
+import { IAxiomKeystoreRollup } from "../src/interfaces/IAxiomKeystoreRollup.sol";
 import { RhinestoneModuleKit, ModuleKitHelpers, AccountInstance, UserOpData } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/accounts/common/interfaces/IERC7579Module.sol";
 import { IEntryPoint, PackedUserOperation } from "modulekit/external/ERC4337.sol";
@@ -76,9 +76,9 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
             storageProof: storageProof
         });
 
-        stateOracle.cacheKeystoreStateRootWithProof(
+        stateOracle.cacheStateRootWithProof(
             _storageProof,
-            IKeystoreStateOracle.OutputRootPreimage({
+            IAxiomKeystoreRollup.OutputRootPreimage({
                 stateRoot: bytes32(0x3c88834ecd749dae9348033b2a889acad890fa045f84061d2347dba67facda8c),
                 withdrawalsRoot: bytes32(0x0000000000000000000000000000000000000000000000000000000000000000),
                 lastValidBlockhash: bytes32(0x0000000000000000000000000000000000000000000000000000000000000000)

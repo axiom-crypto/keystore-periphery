@@ -9,6 +9,11 @@ optimizer_runs = 100000
 evm_version = "cancun"
 fs_permissions = [{ access = "read", path = "proofs"}, { access = "read", path = "./deployment-config"}]
 
+[rpc_endpoints]
+sepolia = "${RPC_URL_11155111}"
+base_sepolia = "${RPC_URL_84532}"
+arbitrum_sepolia = "${RPC_URL_421614}"
+
 [fmt]
   bracket_spacing = true
   int_types = "long"

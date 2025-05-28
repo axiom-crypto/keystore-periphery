@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { IStorageProofVerifier } from "../interfaces/IStorageProofVerifier.sol";
+import { IAxiomKeystoreRollup } from "../interfaces/IAxiomKeystoreRollup.sol";
 import { IL1Block } from "../interfaces/IL1Block.sol";
 import { RLPReader } from "../vendor/optimism-mpt/rlp/RLPReader.sol";
 import { KeystoreStateOracle } from "./KeystoreStateOracle.sol";
@@ -14,11 +15,14 @@ contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
 
     event BlockhashCached(bytes32 _blockhash);
 
-    error StorageProofTooOld();
-
     error BlockhashNotFound(bytes32 _blockhash);
 
+    error InvalidOutputRoot(bytes32 derivedOutputRoot, bytes32 keystoreOutputRoot);
+
     mapping(bytes32 _blockhash => bool) public blockhashes;
+
+    address public immutable KEYSTORE_BRIDGE_ADDRESS;
+    bytes32 public immutable KEYSTORE_STATE_ROOT_STORAGE_SLOT;
 
     IStorageProofVerifier public storageProofVerifier;
 
@@ -28,7 +32,9 @@ contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
         IStorageProofVerifier _storageProofVerifier,
         address keystoreBridgeAddress,
         bytes32 keystoreStateRootStorageSlot
-    ) Ownable(msg.sender) KeystoreStateOracle(keystoreBridgeAddress, keystoreStateRootStorageSlot) {
+    ) Ownable(msg.sender) {
+        KEYSTORE_BRIDGE_ADDRESS = keystoreBridgeAddress;
+        KEYSTORE_STATE_ROOT_STORAGE_SLOT = keystoreStateRootStorageSlot;
         storageProofVerifier = _storageProofVerifier;
     }
 
@@ -55,9 +61,9 @@ contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
         blockhashes[_blockhash] = true;
     }
 
-    function cacheKeystoreStateRootWithProof(
+    function cacheStateRootWithProof(
         IStorageProofVerifier.StorageProof calldata storageProof,
-        OutputRootPreimage calldata outputRootPreimage
+        IAxiomKeystoreRollup.OutputRootPreimage calldata outputRootPreimage
     ) external {
         (bytes32 keystoreOutputRoot, bytes32 _blockhash) = storageProofVerifier.verifyStorageSlot({
             storageProof: storageProof,
@@ -81,17 +87,6 @@ contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
         // TODO: This needs to be revisited. The blockTimestamp appears to be a right-padded uint32 value.
         uint48 blockTimestamp = uint32(bytes4(bytes32(RLPReader.readBytes(blockHeaderRlp[11]))));
 
-        // We don't want to allow older storage proofs to prevent frontrunning
-        // of would-be-valid userOps ending up as expired.
-        uint48 currentTimestamp = keystoreStateRoots[keystoreStateRoot];
-        if (blockTimestamp < currentTimestamp) revert StorageProofTooOld();
-
-        // If caching a state root that has already been cached, we'll want to
-        // update its associated blockTimestamp first
-        keystoreStateRoots[keystoreStateRoot] = blockTimestamp;
-
-        // For the first state root being cached, `latestTimestamp` will be 0.
-        uint48 latestTimestamp = keystoreStateRoots[latestStateRoot];
-        if (blockTimestamp > latestTimestamp) latestStateRoot = keystoreStateRoot;
+        _cacheKeystoreStateRoot(keystoreStateRoot, blockTimestamp);
     }
 }
