@@ -76,7 +76,7 @@ contract KeystoreValidatorTest is RhinestoneModuleKit, Test {
             storageProof: storageProof
         });
 
-        stateOracle.cacheStateRootWithProof(
+        stateOracle.cacheKeystoreStateRootWithProof(
             _storageProof,
             IAxiomKeystoreRollup.OutputRootPreimage({
                 stateRoot: bytes32(0x3c88834ecd749dae9348033b2a889acad890fa045f84061d2347dba67facda8c),

@@ -21,7 +21,7 @@ contract ArbitrumStateOracle is KeystoreStateOracle {
     ///
     /// @param stateRoot The state root to cache.
     /// @param l1BlockTimestamp The L1 block timestamp from which the state root was read.
-    function cacheStateRoot(bytes32 stateRoot, uint48 l1BlockTimestamp) external {
+    function cacheKeystoreStateRoot(bytes32 stateRoot, uint48 l1BlockTimestamp) external {
         if (_l1Sender() != BROADCASTER) revert InvalidL1Sender(_l1Sender());
 
         _cacheKeystoreStateRoot(stateRoot, l1BlockTimestamp);

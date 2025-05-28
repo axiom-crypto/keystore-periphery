@@ -69,8 +69,9 @@ contract ArbitrumBroadcaster {
 
         if (derivedOutputRoot != outputRoot) revert InvalidOutputRoot(derivedOutputRoot, outputRoot);
 
-        bytes memory _calldata =
-            abi.encodeCall(IArbitrumStateOracle.cacheStateRoot, (outputRootPreimage.stateRoot, l1BlockTimestamp));
+        bytes memory _calldata = abi.encodeCall(
+            IArbitrumStateOracle.cacheKeystoreStateRoot, (outputRootPreimage.stateRoot, l1BlockTimestamp)
+        );
 
         ARBITRUM_INBOX.createRetryableTicket{ value: msg.value }({
             to: address(L2_KEYSTORE_STATE_ORACLE),

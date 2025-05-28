@@ -61,7 +61,7 @@ contract OPStackStateOracle is Ownable2Step, KeystoreStateOracle {
         blockhashes[_blockhash] = true;
     }
 
-    function cacheStateRootWithProof(
+    function cacheKeystoreStateRootWithProof(
         IStorageProofVerifier.StorageProof calldata storageProof,
         IAxiomKeystoreRollup.OutputRootPreimage calldata outputRootPreimage
     ) external {
