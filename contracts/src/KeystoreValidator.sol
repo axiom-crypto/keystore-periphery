@@ -216,6 +216,28 @@ contract KeystoreValidator is ERC7579ValidatorBase, IERC6900ValidationModule {
         );
     }
 
+    /// @notice Decodes the `signature` field of a `PackedUserOperation`
+    ///
+    /// @dev It should be noted that the user does not sign over the `signature`
+    /// field, so it is subject to manipulation by the bundler. This is most
+    /// relevant for the caching behavior, which can be altered by the bundler.
+    /// We analyze the security implications below.
+    ///
+    /// There are two scenarios to consider:
+    ///
+    /// 1. The bundler forces the user to use a Merkle proof when they want to
+    ///    read from the cache. This increases the cost of 4337 validation and
+    ///    the calldata footprint of the `userOp`. Users are expected to pick an
+    ///    appropriate `preVerificationGas` and `verificationGasLimit` to upper
+    ///    bound the cost of the `userOp`.
+    ///
+    /// 2. The bundler forces the user to read from the cache when they wanted
+    ///    to perform a fresh read with a Merkle proof.
+    ///      - If the signature is valid against the old signing data, the only
+    ///        impact is cache validity is not extended.
+    ///      - If the signature is only valid against the new signing data, the
+    ///        outcome is equivalent to that of censorship, which the bundler
+    ///        is capable of anyways.
     function _decodeUserOpSignature(bytes calldata signature) internal pure returns (AuthenticationData calldata out) {
         /// @solidity memory-safe-assembly
         assembly {
