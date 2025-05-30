@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { RLPReader } from "./vendor/optimism-mpt/rlp/RLPReader.sol";
-import { SecureMerkleTrie } from "./vendor/optimism-mpt/trie/SecureMerkleTrie.sol";
-import { IStorageProofVerifier } from "./interfaces/IStorageProofVerifier.sol";
+import { RLPReader } from "../vendor/optimism-mpt/rlp/RLPReader.sol";
+import { SecureMerkleTrie } from "../vendor/optimism-mpt/trie/SecureMerkleTrie.sol";
+import { IStorageProofVerifier } from "../interfaces/IStorageProofVerifier.sol";
 
 contract StorageProofVerifier is IStorageProofVerifier {
     error InvalidBlockHeader();

@@ -4,24 +4,23 @@ pragma solidity 0.8.26;
 import { IKeystoreStateOracle } from "../interfaces/IKeystoreStateOracle.sol";
 
 abstract contract KeystoreStateOracle is IKeystoreStateOracle {
-    error InvalidOutputRoot(bytes32 derivedOutputRoot, bytes32 keystoreOutputRoot);
+    error TimestampTooOld();
 
     bytes32 public latestStateRoot;
     mapping(bytes32 keystoreStateRoot => uint48 l1BlockTimestamp) public keystoreStateRoots;
 
-    address public immutable KEYSTORE_BRIDGE_ADDRESS;
-    bytes32 public immutable KEYSTORE_STATE_ROOT_STORAGE_SLOT;
+    function _cacheKeystoreStateRoot(bytes32 stateRoot, uint48 l1BlockTimestamp) internal {
+        // We don't want to allow older timestamps to prevent frontrunning
+        // of would-be-valid userOps ending up as expired.
+        uint48 currentTimestamp = keystoreStateRoots[stateRoot];
+        if (l1BlockTimestamp < currentTimestamp) revert TimestampTooOld();
 
-    constructor(address keystoreBridgeAddress, bytes32 keystoreStateRootStorageSlot) {
-        KEYSTORE_BRIDGE_ADDRESS = keystoreBridgeAddress;
-        KEYSTORE_STATE_ROOT_STORAGE_SLOT = keystoreStateRootStorageSlot;
+        // If caching a state root that has already been cached, we'll want to
+        // update its associated blockTimestamp first
+        keystoreStateRoots[stateRoot] = l1BlockTimestamp;
+
+        // The first time a state root is cached, `latestTimestamp` will be 0.
+        uint48 latestTimestamp = keystoreStateRoots[latestStateRoot];
+        if (l1BlockTimestamp > latestTimestamp) latestStateRoot = stateRoot;
     }
-
-    // TODO: Add this back in with check on msg.sender == canonicalBridge and l1Sender == broadcaster
-    // function cacheKeystoreStateRootNative(
-    //     bytes32 keystoreOutputRoot,
-    //     uint48 l1BlockTimestamp,
-    //     OutputRootPreimage calldata outputRootPreimage
-    // ) external {
-    // }
 }
